@@ -1,45 +1,60 @@
 import { Box, Typography, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../theme";
-import { mockDataTeam } from "../../data/mockData";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import Header from "../../components/Header";
+import { useEffect, useState } from "react";
+import AdminService from "../../Services/AdminService";
+import { useNavigate } from 'react-router-dom';
 
 const Team = () => {
+  const navigate = useNavigate();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [user, setUser] = useState(null);
+
+  const getUsers = async () => {
+    const data = await AdminService.get('/user');
+    console.log(data)
+    if (data) {
+      console.log(data)
+      setUser(data.data.results);
+    }
+  }
+
+  const handleEvent = (params) => {
+    navigate(`/userDetails/${params.row.id}`)
+  }
+
   const columns = [
-    { field: "id", headerName: "ID" },
+    { 
+      field: "id", 
+      headerName: "ID",
+      cellClassName: "name-column--cell", 
+    },
     {
       field: "name",
       headerName: "Name",
       flex: 1,
-      cellClassName: "name-column--cell",
     },
     {
-      field: "age",
-      headerName: "Age",
-      type: "number",
+      field: "gender",
+      headerName: "Gender",
       headerAlign: "left",
       align: "left",
     },
     {
-      field: "phone",
+      field: "phoneNumber",
       headerName: "Phone Number",
       flex: 1,
     },
     {
-      field: "email",
-      headerName: "Email",
+      field: "serviceType",
+      headerName: "Service Type",
       flex: 1,
-    },
-    {
-      field: "accessLevel",
-      headerName: "Access Level",
-      flex: 1,
-      renderCell: ({ row: { access } }) => {
+      renderCell: ({ row: { serviceType } }) => {
         return (
           <Box
             width="60%"
@@ -48,19 +63,19 @@ const Team = () => {
             display="flex"
             justifyContent="center"
             backgroundColor={
-              access === "admin"
+              serviceType === "admin"
                 ? colors.greenAccent[600]
-                : access === "manager"
+                : serviceType === "farmer"
                 ? colors.greenAccent[700]
                 : colors.greenAccent[700]
             }
             borderRadius="4px"
           >
-            {access === "admin" && <AdminPanelSettingsOutlinedIcon />}
-            {access === "manager" && <SecurityOutlinedIcon />}
-            {access === "user" && <LockOpenOutlinedIcon />}
+            {serviceType === "admin" && <AdminPanelSettingsOutlinedIcon />}
+            {serviceType === "farmer" && <SecurityOutlinedIcon />}
+            {serviceType === "serviceProvider" && <LockOpenOutlinedIcon />}
             <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
-              {access}
+              {serviceType}
             </Typography>
           </Box>
         );
@@ -68,8 +83,13 @@ const Team = () => {
     },
   ];
 
+  useEffect(() => {
+    getUsers();
+  }, [])
+
   return (
-    <Box m="20px">
+    <>
+    {user && (<Box m="20px">
       <Header title="TEAM" subtitle="Managing the Team Members" />
       <Box
         m="40px 0 0 0"
@@ -100,9 +120,9 @@ const Team = () => {
           },
         }}
       >
-        <DataGrid checkboxSelection rows={mockDataTeam} columns={columns} />
+        <DataGrid checkboxSelection rows={user} columns={columns} onRowClick={handleEvent} />
       </Box>
-    </Box>
+    </Box>)}</>
   );
 };
 
